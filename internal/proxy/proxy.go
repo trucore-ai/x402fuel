@@ -102,11 +102,10 @@ func (p *Proxy) modifyResponse(resp *http.Response) error {
 	}
 
 	var bestReq *types.PaymentRequirements
-	for i, req := range pr.Accepts {
+	for _, req := range pr.Accepts {
 		if req.Network == "evm:8453" && req.Asset == "USDC" {
 			r := req
 			bestReq = &r
-			_ = i
 			break
 		}
 	}
