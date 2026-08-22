@@ -40,7 +40,13 @@ func runServe(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("load config: %w", err)
 	}
-	if servePort != 8420 {
+
+	// Render injects PORT (e.g. "10000") — take it if --port wasn't explicitly set
+	if servePort == 8420 {
+		if envPort := os.Getenv("PORT"); envPort != "" {
+			fmt.Sscanf(envPort, "%d", &cfg.Server.Port)
+		}
+	} else {
 		cfg.Server.Port = servePort
 	}
 
