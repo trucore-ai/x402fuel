@@ -144,5 +144,5 @@ func (ks *KeyStore) keyPath(address string) string {
 	if len(addr) > 2 && addr[:2] == "0x" {
 		addr = addr[2:]
 	}
-	return filepath.Join(kes.dir, addr+".key")
+	return filepath.Join(ks.dir, addr+".key")
 }
