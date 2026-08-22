@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: x402fuel-api
+    runtime: go
+    plan: free
+    buildCommand: go build -o x402fuel .
+    startCommand: ./x402fuel serve --port $PORT
+    healthCheckPath: /health
+    envVars:
+      - key: HOME
+        value: /opt/render/project
