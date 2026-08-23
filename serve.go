@@ -19,6 +19,37 @@ import (
 	"github.com/trucore-ai/x402fuel/internal/types"
 )
 
+const llmsTxt = `# x402Fuel
+
+> Non-custodial HTTP 402 wallet daemon for AI agents. Give your agent a USDC
+> wallet on Base with one command. Keys never leave your machine. MIT-licensed.
+
+## Install
+  go install github.com/trucore-ai/x402fuel@latest
+
+## Commands
+- x402fuel create --name <name>
+  Creates a Base USDC wallet with encrypted local keys.
+- x402fuel serve --port 8420
+  Starts proxy + REST API + dashboard.
+- x402fuel pause
+  Global kill switch. Blocks all new payments within 1 second.
+- x402fuel status
+  Wallet balances, budget utilization, recent activity.
+
+## API
+- GET /health — Health check. Returns {"status":"ok"}.
+- POST /wallets — Create a new wallet. Returns address.
+- GET /wallets — List wallets.
+- GET /wallets/{address} — Get wallet details + balance.
+- POST /pause — Pause all payments. POST /resume to resume.
+
+## Docs
+- [Full Documentation](https://trucore.xyz/docs/x402fuel): Architecture, CLI
+  reference, budget policy, E2E flow, FAQ.
+- [GitHub](https://github.com/trucore-ai/x402fuel): Source code, issues, discussions.
+- [License](https://github.com/trucore-ai/x402fuel/blob/main/LICENSE): MIT.`
+
 var (
 	servePort   int
 	serveConfig string
@@ -41,7 +72,6 @@ func runServe(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("load config: %w", err)
 	}
 
-	// Render injects PORT (e.g. "10000") — take it if --port wasn't explicitly set
 	if servePort == 8420 {
 		if envPort := os.Getenv("PORT"); envPort != "" {
 			fmt.Sscanf(envPort, "%d", &cfg.Server.Port)
@@ -67,7 +97,6 @@ func runServe(cmd *cobra.Command, args []string) error {
 		Allowlist: cfg.Proxy.Allowlist,
 	}
 	polEng := policy.NewEngine(sp)
-
 	apiSrv := api.NewServer(ks, polEng)
 
 	r := chi.NewRouter()
@@ -75,6 +104,14 @@ func runServe(cmd *cobra.Command, args []string) error {
 		w.Header().Set("Content-Type", "application/json")
 		w.Write([]byte(`{"status":"ok"}`))
 	})
+
+	// Agent-first discoverability: serve llms.txt
+	r.Get("/llms.txt", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
+		w.Header().Set("Link", `</docs/x402fuel>; rel="describedby"`)
+		w.Write([]byte(llmsTxt))
+	})
+
 	apiSrv.Register(r)
 
 	dashMux := http.NewServeMux()
